@@ -1,0 +1,34 @@
+from langchain.llms import OpenAI
+from langchain.chains import RetrievalQA
+from langchain.embeddings import OpenAIEmbeddings
+import os
+
+class QAAgent:
+    def __init__(self):
+        # 设置API密钥 (实际使用环境变量)
+        os.environ["OPENAI_API_KEY"] = "your-api-key"
+        self.llm = OpenAI(temperature=0)
+        self.embeddings = OpenAIEmbeddings()
+    
+    async def answer_question(self, question: str, doc_id: str):
+        """回答基于文档的问题"""
+        
+        # 构建prompt (展示prompt engineering)
+        prompt = f"""
+        基于提供的文档内容，请回答以下问题：
+        
+        问题：{question}
+        
+        请确保：
+        1. 回答要准确、简洁
+        2. 如果文档中没有相关信息，请明确说明
+        3. 用中文回答
+        
+        请开始回答：
+        """
+        
+        # 这里应该实现检索增强生成(RAG)
+        # 简化版：直接调用大模型
+        response = self.llm(prompt)
+        
+        return response

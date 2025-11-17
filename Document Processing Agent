@@ -1,0 +1,38 @@
+import os
+from langchain.document_loaders import PyPDFLoader, TextLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from app.database import get_db
+import uuid
+
+class DocumentAgent:
+    def __init__(self):
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200
+        )
+    
+    async def process_document(self, file_path: str):
+        """处理上传的文档"""
+        # 根据文件类型选择加载器
+        if file_path.endswith('.pdf'):
+            loader = PyPDFLoader(file_path)
+        else:
+            loader = TextLoader(file_path)
+        
+        documents = loader.load()
+        
+        # 分割文本
+        chunks = self.text_splitter.split_documents(documents)
+        
+        # 生成文档ID
+        doc_id = str(uuid.uuid4())
+        
+        # 存储到数据库 (简化版)
+        await self._store_to_database(doc_id, chunks, file_path)
+        
+        return {"doc_id": doc_id, "chunk_count": len(chunks)}
+    
+    async def _store_to_database(self, doc_id, chunks, file_path):
+        """将文档块存储到数据库"""
+        # 这里实现数据库存储逻辑
+        pass

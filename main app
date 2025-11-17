@@ -1,1 +1,50 @@
 
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from app.agents.doc_agent import DocumentAgent
+from app.agents.qa_agent import QAAgent
+from app.database import get_db
+import os
+
+app = FastAPI(title="智能文档问答系统")
+
+# CORS中间件
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 初始化Agent
+doc_agent = DocumentAgent()
+qa_agent = QAAgent()
+
+@app.post("/upload")
+async def upload_document(file: UploadFile = File(...)):
+    """上传文档并处理"""
+    try:
+        # 保存文件
+        file_path = f"./uploads/{file.filename}"
+        with open(file_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+        
+        # 使用Agent处理文档
+        result = await doc_agent.process_document(file_path)
+        return {"message": "文档处理成功", "doc_id": result["doc_id"]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/chat")
+async def chat_with_doc(question: str, doc_id: str):
+    """基于文档的问答"""
+    try:
+        response = await qa_agent.answer_question(question, doc_id)
+        return {"answer": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/")
+async def root():
+    return {"message": "智能文档问答系统 API"}
